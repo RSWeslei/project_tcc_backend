@@ -7,14 +7,14 @@ const createProductType = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: productType,
       message: 'Tipo de produto criado com sucesso!',
+      data: productType,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      data: null,
       message: 'Erro ao criar o tipo de produto!',
+      data: [],
     });
   }
 };
@@ -24,17 +24,17 @@ const getAllProductTypes = async (req, res) => {
     const productTypes = await ProductType.findAll();
     return res.status(200).json({
       success: true,
-      data: productTypes,
       message: 'Todos os tipos de produtos foram retornados com sucesso!',
+      data: productTypes,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      data: [],
       message: 'Erro ao retornar os tipos de produtos!',
+      data: [],
     });
   }
-}
+};
 
 const getProductTypeById = async (req, res) => {
   const { id } = req.params;
@@ -45,21 +45,21 @@ const getProductTypeById = async (req, res) => {
     if (!productType) {
       return res.status(404).json({
         success: false,
-        data: null,
         message: 'Tipo de produto não encontrado',
+        data: [],
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: productType,
       message: 'Tipo de produto recuperado com sucesso!',
+      data: productType,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      data: null,
       message: 'Erro ao buscar o tipo de produto',
+      data: [],
     });
   }
 };
@@ -74,8 +74,8 @@ const updateProductType = async (req, res) => {
     if (!productType) {
       return res.status(404).json({
         success: false,
-        data: null,
         message: 'Tipo de produto não encontrado',
+        data: [],
       });
     }
 
@@ -84,14 +84,14 @@ const updateProductType = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: productType,
       message: 'Tipo de produto atualizado com sucesso!',
+      data: productType,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      data: null,
       message: 'Erro ao atualizar o tipo de produto',
+      data: [],
     });
   }
 };
@@ -105,8 +105,8 @@ const deleteProductType = async (req, res) => {
     if (!productType) {
       return res.status(404).json({
         success: false,
-        data: null,
         message: 'Tipo de produto não encontrado',
+        data: [],
       });
     }
 
@@ -114,14 +114,14 @@ const deleteProductType = async (req, res) => {
 
     return res.status(204).json({
       success: true,
-      data: null,
       message: 'Tipo de produto excluído com sucesso!',
+      data: [],
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      data: null,
       message: 'Erro ao excluir o tipo de produto',
+      data: [],
     });
   }
 };

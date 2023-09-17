@@ -13,3 +13,12 @@ CREATE TABLE product (
     status varchar(20),
     has_pesticides boolean
 );
+
+CREATE TABLE "user" (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    token VARCHAR(255),
+    name VARCHAR(255) NOT NULL
+);
+
