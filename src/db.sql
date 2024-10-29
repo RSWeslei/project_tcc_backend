@@ -1,24 +1,49 @@
-CREATE TABLE product_type (
-    id serial PRIMARY KEY,
-    name varchar(255) NOT NULL
+CREATE TABLE "user"
+(
+    id            SERIAL PRIMARY KEY,
+    email         VARCHAR(100),
+    password_hash VARCHAR(200),
+    token         VARCHAR(100),
+    name          VARCHAR(100)
 );
 
-CREATE TABLE product (
-    id serial PRIMARY KEY,
-    name varchar(255) NOT NULL,
-    description text,
-    price numeric(10, 2) NOT NULL,
-    image_path varchar(255),
-    type_id integer REFERENCES product_type(id),
-    status varchar(20),
-    has_pesticides boolean
+CREATE TABLE address
+(
+    id          SERIAL PRIMARY KEY,
+    street      VARCHAR(100),
+    number      INTEGER,
+    complement  VARCHAR(100),
+    city        VARCHAR(100),
+    state       VARCHAR(2),
+    postal_code VARCHAR(20),
+    longitude   NUMERIC(8, 6),
+    latitude    NUMERIC(8, 6),
+    region      VARCHAR(100)
 );
 
-CREATE TABLE "user" (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    token VARCHAR(255),
-    name VARCHAR(255) NOT NULL
+CREATE TABLE producer
+(
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER REFERENCES "user" (id),
+    cpf        VARCHAR(14),
+    address_id INTEGER REFERENCES address (id)
 );
 
+CREATE TABLE product_type
+(
+    id   SERIAL PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE product
+(
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(100),
+    description VARCHAR(400),
+    price       NUMERIC(10, 2),
+    producer_id INTEGER REFERENCES producer (id),
+    image_path  VARCHAR(255),
+    type_id     INTEGER REFERENCES product_type (id),
+    status      BOOLEAN,
+    pesticides  BOOLEAN
+);
