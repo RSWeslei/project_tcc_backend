@@ -20,6 +20,10 @@ const Producer = sequelize.define('Producer', {
     cpf: {
         type: DataTypes.STRING(14),
     },
+    imagePath: {
+        type: DataTypes.STRING(255),
+        field: 'image_path',
+    },
     addressId: {
         type: DataTypes.INTEGER,
         references: {
@@ -27,10 +31,13 @@ const Producer = sequelize.define('Producer', {
             key: 'id',
         },
         field: 'address_id',
-    }
+    },
 }, {
     tableName: 'producer',
     timestamps: false,
 });
+
+Producer.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Producer.belongsTo(Address, { foreignKey: 'address_id', as: 'address' });
 
 module.exports = Producer;

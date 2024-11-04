@@ -4,6 +4,7 @@ const app = express();
 
 app.use(express.json());
 routes(app);
+app.use('/uploads', express.static('uploads'));
 app.get('/', (req, res) => {
     res.status(404).send('Pagina web nao encontrada!')
 });

@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../configs/db');
 const Producer = require('./Producer');
-const ProductType = require('./ProductType');
 
 const Product = sequelize.define('Product', {
     id: {
@@ -21,11 +20,11 @@ const Product = sequelize.define('Product', {
     },
     producerId: {
         type: DataTypes.INTEGER,
+        field: 'producer_id',
         references: {
             model: Producer,
             key: 'id',
         },
-        field: 'producer_id',
     },
     imagePath: {
         type: DataTypes.STRING(255),
@@ -33,10 +32,6 @@ const Product = sequelize.define('Product', {
     },
     typeId: {
         type: DataTypes.INTEGER,
-        references: {
-            model: ProductType,
-            key: 'id',
-        },
         field: 'type_id',
     },
     status: {
@@ -49,5 +44,7 @@ const Product = sequelize.define('Product', {
     tableName: 'product',
     timestamps: false,
 });
+
+Product.belongsTo(Producer, { foreignKey: 'producer_id', as: 'producer' });
 
 module.exports = Product;

@@ -1,9 +1,13 @@
-const Producer = require('../models/Producer'); // Importe o seu modelo Sequelize
+const Producer = require('../models/Producer');
+const User = require('../models/User');
+const Address = require('../models/Address');
 
 const createProducer = async (req, res) => {
     try {
         const { userId, cpf, addressId } = req.body;
-        const producer = await Producer.create({ userId, cpf, addressId });
+        const imagePath = req.file ? req.file.path : null;
+
+        const producer = await Producer.create({ userId, cpf, addressId, imagePath });
 
         return res.status(201).json({
             success: true,
@@ -21,7 +25,21 @@ const createProducer = async (req, res) => {
 
 const getAllProducers = async (req, res) => {
     try {
-        const producers = await Producer.findAll();
+        const producers = await Producer.findAll({
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'email', 'name'],
+                },
+                {
+                    model: Address,
+                    as: 'address',
+                    attributes: ['id', 'street', 'number', 'complement', 'city', 'state', 'postalCode', 'longitude', 'latitude', 'region'],
+                },
+            ],
+        });
+
         return res.status(200).json({
             success: true,
             message: 'Todos os produtores foram retornados com sucesso!',
@@ -35,6 +53,8 @@ const getAllProducers = async (req, res) => {
         });
     }
 };
+
+
 
 const getProducerById = async (req, res) => {
     const { id } = req.params;
