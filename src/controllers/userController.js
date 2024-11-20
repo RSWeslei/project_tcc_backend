@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
+const Producer = require('../models/Producer');
+const Address = require('../models/Address');
 require('dotenv').config();
 
 const signUp = async (req, res) => {
@@ -51,89 +53,71 @@ const signUp = async (req, res) => {
 }
 
 const login = async (req, res) => {
-  try {
-    let { name, email, password } = req.body
-    if ((!name && !email) || !password) {
-      return res.status(400).send({
-        success: false,
-        message: 'Dados inválidos',
-        data: []
-      })
-    }
-
-    let user = {}
-    if (name) {
-      user = await User.findOne({
-        where: {
-          name: name
+    try {
+        let { name, email, password } = req.body;
+        if ((!name && !email) || !password) {
+            return res.status(400).send({
+                success: false,
+                message: 'Dados inválidos',
+                data: []
+            });
         }
-      })
-    } else {
-      user = await User.findOne({
-        where: {
-          email: email
+
+        let user = {};
+        if (name) {
+            user = await User.findOne({
+                where: {
+                    name: name
+                }
+            });
+        } else {
+            user = await User.findOne({
+                where: {
+                    email: email.toLowerCase()
+                }
+            });
         }
-      })
+
+        if (!user) {
+            return res.status(500).send({
+                success: false,
+                message: 'Senha incorreta ou usuário não encontrado',
+                data: []
+            });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!passwordMatch) {
+            return res.status(500).send({
+                success: false,
+                message: 'Senha incorreta ou usuário não encontrado',
+                data: []
+            });
+        }
+        let token = jwt.sign(
+            { idUser: user.id, name: user.name },
+            process.env.JWT_SECRET,
+            { expiresIn: '10h' }
+        );
+
+        user.token = token;
+        await user.save();
+
+        return res.status(200).send({
+            success: true,
+            message: 'Login realizado com sucesso',
+            data: {
+                token: token
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).send({
+            success: false,
+            message: error.message,
+            data: []
+        });
     }
-
-    if (!user) {
-      return res.status(500).send({
-        success: false,
-        message: 'Usuário nao encontrado',
-        data: []
-      })
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash)
-    if (!passwordMatch) {
-      return res.status(500).send({
-        success: false,
-        message: 'Senha incorreta',
-        data: []
-      })
-    }
-
-    let token = jwt.sign(
-      { idUser: user.id, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: '10h' }
-    );
-
-    user.token = token
-    user.save()
-
-    return res.status(200).send({
-      type: 'success',
-      message: 'Login realizado com sucesso',
-      data: {
-        token: token
-      }
-    })
-
-  } catch (error) {
-    return res.status(500).send({
-      type: 'error',
-      message: error.message,
-      data: []
-    })
-  }
-}
-
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.findAll();
-    return res.status(200).json({
-      success: true,
-      data: users,
-      message: 'Todos os usuários retornados com sucesso!',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      data: [],
-      message: 'Erro ao buscar usuários!',
-    });
-  }
 };
 
 const getUserById = async (req, res) => {
@@ -156,6 +140,7 @@ const getUserById = async (req, res) => {
       message: 'Usuário recuperado com sucesso!',
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       data: null,
@@ -163,6 +148,104 @@ const getUserById = async (req, res) => {
     });
   }
 };
+
+const getUserByToken = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]
+
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Token não fornecido',
+            data: []
+        })
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const userId = decoded.idUser
+
+        const user = await User.findByPk(userId)
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                message: 'Usuário não encontrado',
+            })
+        }
+
+        const producer = await Producer.findOne({
+            where: { userId: userId },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                },
+                {
+                    model: Address,
+                    as: 'address',
+                }
+            ]
+        })
+
+        const isProducer = !!producer
+
+        const responseData = {
+            user: { ...user.toJSON(), isProducer },
+            producer: isProducer ? producer : null
+        }
+
+        if (isProducer) {
+            return res.status(200).json({
+                success: true,
+                data: responseData,
+                message: 'Usuário produtor recuperado com sucesso!'
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: responseData,
+            message: 'Usuário recuperado com sucesso!'
+        })
+
+    } catch (error) {
+        console.error('Erro ao obter usuário pelo token:', error)
+        return res.status(500).json({
+            success: false,
+            data: null,
+            message: 'Erro ao obter usuário pelo token'
+        })
+    }
+}
+
+const validateToken = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]
+
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Token não fornecido',
+            data: []
+        })
+    }
+
+    try {
+        jwt.verify(token, process.env.JWT_SECRET)
+        return res.status(200).json({
+            success: true,
+            message: 'Token válido',
+            data: []
+        })
+    } catch (error) {
+        console.error('Erro ao validar token:', error)
+        return res.status(500).json({
+            success: false,
+            message: 'Token inválido',
+            data: []
+        })
+    }
+}
 
 const updateUser = async (req, res) => {
   const { id } = req.params;
@@ -231,6 +314,9 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-  signUp,
-  login
+    signUp,
+    login,
+    getUserById,
+    getUserByToken,
+    validateToken
 };

@@ -1,13 +1,55 @@
 const Producer = require('../models/Producer');
 const User = require('../models/User');
 const Address = require('../models/Address');
+const jwt = require('jsonwebtoken')
+const {Op} = require('sequelize')
 
 const createProducer = async (req, res) => {
     try {
-        const { userId, cpf, addressId } = req.body;
-        const imagePath = req.file ? req.file.path : null;
+        console.log(req.body);
+        const { cpf, imagePath, address } = req.body;
 
-        const producer = await Producer.create({ userId, cpf, addressId, imagePath });
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token não fornecido',
+                data: []
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
+        const addressNumber = parseInt(address.number, 10);
+        if (isNaN(addressNumber)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Número do endereço deve ser um valor numérico válido',
+                data: []
+            });
+        }
+
+        const newAddress = await Address.create({
+            street: address.street,
+            number: addressNumber,
+            complement: address.complement,
+            city: address.city,
+            state: address.state,
+            postalCode: address.postalCode,
+            latitude: address.latitude,
+            longitude: address.longitude,
+        });
+
+        const defaultImagePath = 'uploads/userDefault.png';
+
+        const producer = await Producer.create({
+            userId,
+            cpf,
+            addressId: newAddress.id,
+            imagePath: imagePath || defaultImagePath,
+        });
 
         return res.status(201).json({
             success: true,
@@ -25,7 +67,23 @@ const createProducer = async (req, res) => {
 
 const getAllProducers = async (req, res) => {
     try {
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token não fornecido',
+                data: []
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
         const producers = await Producer.findAll({
+            where: {
+                userId: { [Op.ne]: userId }
+            },
             include: [
                 {
                     model: User,
@@ -53,9 +111,6 @@ const getAllProducers = async (req, res) => {
         });
     }
 };
-
-
-
 const getProducerById = async (req, res) => {
     const { id } = req.params;
 

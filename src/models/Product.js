@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../configs/db');
 const Producer = require('./Producer');
+const ProductType = require('./ProductType');
 
 const Product = sequelize.define('Product', {
     id: {
@@ -46,5 +47,6 @@ const Product = sequelize.define('Product', {
 });
 
 Product.belongsTo(Producer, { foreignKey: 'producer_id', as: 'producer' });
+Product.belongsTo(ProductType, { foreignKey: 'typeId', as: 'type' });
 
 module.exports = Product;

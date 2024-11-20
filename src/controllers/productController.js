@@ -1,62 +1,142 @@
 const Product = require('../models/Product');
 const Producer = require('../models/Producer');
+const Address = require('../models/Address');
+const ProductType = require('../models/ProductType');
 const User = require('../models/User');
 const { upload } = require('../middleware/upload');
 const { deleteImage } = require('../middleware/upload');
+const {Op} = require('sequelize')
+const {  verify} = require('jsonwebtoken')
 
 const createProduct = async (req, res) => {
-    upload.single('image')(req, res, async (err) => {
-        if (err) {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+        console.log('Token não fornecido.');
+        return res.status(401).json({
+            success: false,
+            message: 'Token não fornecido',
+            data: []
+        });
+    }
+
+    try {
+        const decoded = verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
+        const producer = await Producer.findOne({
+            where: {
+                userId: userId
+            }
+        });
+
+        if (!producer) {
+            return res.status(403).json({
+                success: false,
+                message: 'Usuário não possui uma conta de produtor!',
+                data: [],
+            });
+        }
+
+        await new Promise((resolve, reject) => {
+            upload.single('imagePath')(req, res, (err) => {
+                if (err) {
+                    console.log('Erro no upload da imagem:', err);
+                    return reject({
+                        success: false,
+                        message: 'Erro ao fazer upload da imagem!',
+                        data: [],
+                    });
+                }
+                resolve();
+            });
+        });
+
+        const { name, description, price, typeId, status, pesticides } = req.body;
+
+        if (!name || !description || !price || !typeId) {
             return res.status(400).json({
                 success: false,
-                message: 'Erro ao fazer upload da imagem!',
-                data: [],
+                message: 'Todos os campos obrigatórios (name, description, price, typeId) devem ser preenchidos!',
+                data: []
             });
         }
 
-        try {
-            const { name, description, price, producerId, typeId, status, pesticides } = req.body;
-            const imagePath = req.file ? req.file.path : null;
+        const imagePath = req.file ? req.file.path : 'uploads/default-product.png';
 
-            const product = await Product.create({
-                name,
-                description,
-                price,
-                producerId,
-                imagePath,
-                typeId,
-                status,
-                pesticides,
-            });
+        const product = await Product.create({
+            name,
+            description,
+            price,
+            producerId: producer.id,
+            imagePath,
+            typeId,
+            status,
+            pesticides,
+        });
 
-            return res.status(201).json({
-                success: true,
-                message: 'Produto criado com sucesso!',
-                data: product,
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: 'Erro ao criar o produto!',
-                data: [],
-            });
+        return res.status(200).json({
+            success: true,
+            message: 'Produto criado com sucesso!',
+            data: product,
+        });
+
+    } catch (error) {
+        console.log('Erro ao criar o produto:', error);
+        if (error.success === false) {
+            return res.status(400).json(error);
         }
-    });
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao criar o produto!',
+            data: [],
+        });
+    }
 };
 
 const getAllProducts = async (req, res) => {
     try {
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token não fornecido',
+                data: []
+            });
+        }
+
+        const decoded = verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
         const products = await Product.findAll({
-            include: {
-                model: Producer,
-                as: 'producer',
-                attributes: ['id', 'cpf', 'userId', 'addressId', 'imagePath'],
-                include: {
-                    model: User,
-                    as: 'user',
-                    attributes: ['id', 'email', 'name'],
+            include: [
+                {
+                    model: Producer,
+                    as: 'producer',
+                    required: true,
+                    attributes: ['id', 'cpf', 'userId', 'addressId', 'imagePath'],
+                    where: {
+                        userId: { [Op.ne]: userId }
+                    },
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: ['id', 'email', 'name'],
+                        },
+                        {
+                            model: Address,
+                            as: 'address',
+                        }
+                    ],
                 },
-            },
+                {
+                    model: ProductType,
+                    as: 'type',
+                    attributes: ['id', 'name'],
+                }
+            ],
         });
 
         return res.status(200).json({
@@ -73,6 +153,67 @@ const getAllProducts = async (req, res) => {
         });
     }
 };
+
+const getUserProducts = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token não fornecido',
+                data: []
+            });
+        }
+
+        const decoded = verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
+        const products = await Product.findAll({
+            include: [
+                {
+                    model: Producer,
+                    as: 'producer',
+                    required: true,
+                    attributes: ['id', 'cpf', 'userId', 'addressId', 'imagePath'],
+                    where: {
+                        userId: userId
+                    },
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: ['id', 'email', 'name'],
+                        },
+                        {
+                            model: Address,
+                            as: 'address',
+                        }
+                    ],
+                },
+                {
+                    model: ProductType,
+                    as: 'type',
+                    attributes: ['id', 'name'],
+                }
+            ],
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Todos os produtos do usuário foram retornados com sucesso!',
+            data: products,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao retornar os produtos do usuário!',
+            data: [],
+        });
+    }
+};
+
 
 const getProductById = async (req, res) => {
     const { id } = req.params;
@@ -115,28 +256,82 @@ const getProductById = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     const { id } = req.params;
-    const { name, description, price, producerId, imagePath, typeId, status, pesticides } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+        console.log('Token não fornecido. Cancelando operação.');
+        return res.status(401).json({
+            success: false,
+            message: 'Token não fornecido',
+            data: []
+        });
+    }
 
     try {
-        const product = await Product.findByPk(id);
+        const decoded = verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
 
-        if (!product) {
-            return res.status(404).json({
+        const producer = await Producer.findOne({
+            where: {
+                userId: userId
+            }
+        });
+
+        if (!producer) {
+            return res.status(403).json({
                 success: false,
-                message: 'Produto não encontrado',
+                message: 'Usuário não possui uma conta de produtor!',
                 data: [],
             });
         }
 
-        Object.assign(product, { name, description, price, producerId, imagePath, typeId, status, pesticides });
-        await product.save();
+        const product = await Product.findOne({
+            where: {
+                id: id,
+                producerId: producer.id // Ensure the product belongs to the logged-in producer
+            }
+        });
 
-        return res.status(200).json({
-            success: true,
-            message: 'Produto atualizado com sucesso!',
-            data: product,
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Produto não encontrado ou não pertence ao usuário',
+                data: [],
+            });
+        }
+
+        upload.single('imagePath')(req, res, async (err) => {
+            if (err) {
+                console.log('Erro no upload da imagem:', err);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Erro ao fazer upload da imagem!',
+                    data: [],
+                });
+            }
+
+            const { name, description, price, typeId, status, pesticides } = req.body;
+            const updatedData = {
+                name: name || product.name,
+                description: description || product.description,
+                price: price || product.price,
+                typeId: typeId || product.typeId,
+                status: status !== undefined ? status : product.status,
+                pesticides: pesticides !== undefined ? pesticides : product.pesticides,
+                imagePath: req.file ? req.file.path : product.imagePath,
+            };
+
+            Object.assign(product, updatedData);
+            await product.save();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Produto atualizado com sucesso!',
+                data: product,
+            });
         });
     } catch (error) {
+        console.log('Erro ao atualizar o produto:', error);
         return res.status(500).json({
             success: false,
             message: 'Erro ao atualizar o produto',
@@ -149,12 +344,36 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const product = await Product.findByPk(id);
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token não fornecido',
+                data: []
+            });
+        }
+
+        const decoded = verify(token, process.env.JWT_SECRET);
+        const userId = decoded.idUser;
+
+        const product = await Product.findOne({
+            where: {
+                id: id
+            },
+            include: {
+                model: Producer,
+                as: 'producer',
+                where: {
+                    userId: userId
+                }
+            }
+        });
 
         if (!product) {
             return res.status(404).json({
                 success: false,
-                message: 'Produto não encontrado',
+                message: 'Produto não encontrado ou não pertence ao usuário',
                 data: [],
             });
         }
@@ -186,4 +405,5 @@ module.exports = {
     getProductById,
     updateProduct,
     deleteProduct,
+    getUserProducts
 };
