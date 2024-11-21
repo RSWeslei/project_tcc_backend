@@ -28,7 +28,6 @@ const insertData = async () => {
 
         const producers = await Producer.bulkCreate([
             { userId: users[0].id, cpf: '123.456.789-00', addressId: addresses[0].id, imagePath: 'uploads/user.png' },
-            { userId: users[1].id, cpf: '234.567.890-11', addressId: addresses[1].id, imagePath: 'uploads/user_02.png' },
             { userId: users[2].id, cpf: '345.678.901-22', addressId: addresses[2].id, imagePath: 'uploads/user_03.png' },
             { userId: users[3].id, cpf: '456.789.012-33', addressId: addresses[3].id, imagePath: 'uploads/user_02.png' },
             { userId: users[4].id, cpf: '567.890.123-44', addressId: addresses[4].id, imagePath: 'uploads/user.png' }
