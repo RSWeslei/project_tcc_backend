@@ -118,9 +118,6 @@ const getAllProducts = async (req, res) => {
                     as: 'producer',
                     required: true,
                     attributes: ['id', 'cpf', 'userId', 'addressId', 'imagePath'],
-                    where: {
-                        userId: { [Op.ne]: userId }
-                    },
                     include: [
                         {
                             model: User,
