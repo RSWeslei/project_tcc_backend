@@ -73,7 +73,7 @@ const login = async (req, res) => {
         } else {
             user = await User.findOne({
                 where: {
-                    email: email.toLowerCase()
+                    email: email
                 }
             });
         }

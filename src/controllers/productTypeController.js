@@ -1,4 +1,4 @@
-const ProductType = require('../models/ProductType'); // Importe o seu modelo Sequelize
+const ProductType = require('../models/ProductType');
 
 const createProductType = async (req, res) => {
   try {

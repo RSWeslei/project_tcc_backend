@@ -7,6 +7,12 @@ CREATE TABLE "user"
     name          VARCHAR(100)
 );
 
+CREATE TABLE unit
+(
+    id   SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
 CREATE TABLE address
 (
     id          SERIAL PRIMARY KEY,
@@ -45,6 +51,7 @@ CREATE TABLE product
     producer_id INTEGER REFERENCES producer (id),
     image_path  VARCHAR(255),
     type_id     INTEGER REFERENCES product_type (id),
+    unit_id     INTEGER REFERENCES unit (id),
     status      BOOLEAN,
     pesticides  BOOLEAN
 );
@@ -85,3 +92,9 @@ VALUES
     ('Pimentão Vermelho', 'Pimentão vermelho orgânico, ideal para saladas e grelhados.', 5.75, 3, 'uploads/pimentão-vermelho-e1592702460226.jpg', 3, true, false),
     ('Batata Doce', 'Batata doce rica em nutrientes, ideal para uma alimentação saudável.', 6.20, 1, 'uploads/sweet-potato-1666707_1280.jpg', 3, true, false),
     ('Tomate', 'Tomates frescos e suculentos, perfeitos para saladas e molhos.', 3.80, 2, 'uploads/tomate.jpg', 1, true, false);
+
+INSERT INTO unit (name) VALUES ('kg');
+INSERT INTO unit (name) VALUES ('litro');
+INSERT INTO unit (name) VALUES ('unidade');
+INSERT INTO unit (name) VALUES ('metro');
+INSERT INTO unit (name) VALUES ('grama');

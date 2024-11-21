@@ -7,7 +7,7 @@ const Product = require('./Product');
 
 const syncDatabase = async () => {
     try {
-        await sequelize.sync({ force: true });
+        await sequelize.sync({ force: false });
         console.log('Banco de dados sincronizado com sucesso!');
     } catch (error) {
         console.error('Erro ao sincronizar o banco de dados:', error);
