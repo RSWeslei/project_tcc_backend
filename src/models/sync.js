@@ -48,15 +48,16 @@ const insertData = async () => {
             { name: 'gramas' }
         ]);
 
-        const productsData = [];
-        producers.forEach((producer, index) => {
-            productsData.push(
-                { name: 'Maçã', description: 'Maçãs frescas e suculentas.', price: 5.00, producerId: producer.id, typeId: productTypes[0].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/apple.png' },
-                { name: 'Banana', description: 'Bananas maduras, ideais para um lanche.', price: 3.00, producerId: producer.id, typeId: productTypes[0].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/banana.png' },
-                { name: 'Alface', description: 'Alface crespa, rica em fibras.', price: 2.50, producerId: producer.id, typeId: productTypes[1].id, unitId: units[2].id, status: true, pesticides: true, imagePath: 'uploads/lettuce.png' },
-                { name: 'Leite', description: 'Leite integral, fresco e saboroso.', price: 4.50, producerId: producer.id, typeId: productTypes[3].id, unitId: units[1].id, status: true, pesticides: false, imagePath: 'uploads/milk.png' }
-            );
-        });
+        const productsData = [
+            { name: 'Leite', description: 'Leite integral, fresco e saboroso.', price: 4.50, producerId: producers[0].id, typeId: productTypes[3].id, unitId: units[1].id, status: true, pesticides: false, imagePath: 'uploads/leite.jpg' },
+            { name: 'Pimentão', description: 'Pimentão vermelho fresco.', price: 3.00, producerId: producers[0].id, typeId: productTypes[1].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/pimentao.jpg' },
+            { name: 'Batata Doce', description: 'Batata doce rica em nutrientes.', price: 2.80, producerId: producers[1].id, typeId: productTypes[1].id, unitId: units[0].id, status: true, pesticides: true, imagePath: 'uploads/batata-doce.jpg' },
+            { name: 'Cenoura', description: 'Cenouras frescas e nutritivas.', price: 3.50, producerId: producers[1].id, typeId: productTypes[1].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/cenoura.jpg' },
+            { name: 'Maçã', description: 'Maçãs frescas e suculentas.', price: 5.00, producerId: producers[2].id, typeId: productTypes[0].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/maca.png' },
+            { name: 'Banana', description: 'Bananas maduras, ideais para um lanche.', price: 3.00, producerId: producers[2].id, typeId: productTypes[0].id, unitId: units[0].id, status: true, pesticides: false, imagePath: 'uploads/banana.png' },
+            { name: 'Alface', description: 'Alface crespa, rica em fibras.', price: 2.50, producerId: producers[3].id, typeId: productTypes[1].id, unitId: units[2].id, status: true, pesticides: true, imagePath: 'uploads/alface.jpg' },
+            { name: 'Leite', description: 'Leite integral, fresco e saboroso.', price: 4.50, producerId: producers[4].id, typeId: productTypes[3].id, unitId: units[1].id, status: true, pesticides: false, imagePath: 'uploads/leite.jpg' }
+        ];
         await Product.bulkCreate(productsData);
 
         console.log('Dados inseridos com sucesso!');
